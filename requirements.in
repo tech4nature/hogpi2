@@ -7,3 +7,5 @@ pylint
 json_minify
 autopep8
 gpiozero
+requests
+pyserial

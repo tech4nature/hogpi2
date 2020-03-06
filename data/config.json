@@ -1,4 +1,17 @@
 {
+    "hedge": {
+        "temp_time": 3600, // Duration between temperature runs
+        "ip_root": "10.170.1.",
+        "ip_min": 10,
+        "ip_max": 20
+    },
+    "post": {
+        "box_id": "007",
+        "backup_videos": true
+    },
+    "thermo": {
+        "invert_in_out": false // Toggle if your outside sensor is reading as inside
+    },
     "video": {
         "record_time": 10,
         "file1_name": "1stPASS.mp4", // Name of the 1st file

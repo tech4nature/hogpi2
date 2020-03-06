@@ -14,7 +14,7 @@ config: Dict = json.loads(json_minify(
 logger = logging.getLogger(__name__)
 
 
-class Sensor:
+class sensor:
     def __init__(self):
         # Configure and initialise HX711
 
