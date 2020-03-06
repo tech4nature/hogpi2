@@ -1,0 +1,8 @@
+pip-tools
+numpy
+pathlib
+pytz
+tzlocal
+pylint
+json_minify
+autopep8
