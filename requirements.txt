@@ -7,6 +7,8 @@
 astroid==2.3.3            # via pylint
 autopep8==1.5             # via -r requirements.in
 click==7.0                # via pip-tools
+colorzero==1.1            # via gpiozero
+gpiozero==1.5.1           # via -r requirements.in
 isort==4.3.21             # via pylint
 json-minify==0.3.0        # via -r requirements.in
 lazy-object-proxy==1.4.3  # via astroid
