@@ -1,4 +1,12 @@
 {
+    "video": {
+        "record_time": 10,
+        "file1_name": "1stPASS.mp4", // Name of the 1st file
+        "file2_name": "2ndPASS.mp4", // Name of the 2nd file
+        "font_path": "/home/pi/.fonts/NovaRound.ttf",
+        "font_size": 48,
+        "font_colour": "orange"
+    },
     "weight": {
         "min_percentile": 75, // The percentile the value has to be above to be factored into the average
         "spike_cut": 5,  // A percentage of values that will be cut off to get rid of spikes

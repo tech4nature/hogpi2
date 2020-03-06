@@ -9,7 +9,8 @@ from json_minify import json_minify
 from .hx711 import HX711
 from . import data
 
-config: Dict = json.loads(json_minify(open(Path.home() / 'data' / 'config.json', 'r+').read()))['weight']
+config: Dict = json.loads(json_minify(
+    open(Path.home() / 'data' / 'config.json', 'r+').read()))['weight']
 logger = logging.getLogger(__name__)
 
 

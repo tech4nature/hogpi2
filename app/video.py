@@ -3,21 +3,26 @@ from datetime import datetime
 from time import strftime
 import os
 import sys
-import led
 import logging
 import pytz
 import tzlocal
+from pathlib import Path
+import json
+from json_minify import json_minify
+from typing import Dict
 
+from . import led
 
+config: Dict = json.loads(json_minify(
+    open(Path.home() / 'data' / 'config.json', 'r+').read()))['video']
 logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
     irled = led.sensor(17)  # Instantiate led class and assign the pin the BCM17
 
-    output_folder = "/home/pi/Videos/"  # output folder
-    output_file1 = output_folder + "1stPASS.mp4"
-    rectime = "10"  # record time of 10s
+    output_folder = Path.home() / 'data' / 'videos' # output folder
+    output_file1 = output_folder / config['file1_name']
 
     # ffmpeg 1st Pass record
     irled.on()  # Turn led on
@@ -67,7 +72,7 @@ if __name__ == "__main__":
             "-timestamp",
             "now",
             "-t",
-            rectime,
+            config['record_time'],
             "-y",
             output_file1,
         ],
@@ -105,7 +110,7 @@ if __name__ == "__main__":
     filename = d.replace(" ", "-")
 
     # ffmpeg 2nd pass to sync audio and video
-    output_file2 = output_folder + "2ndPASS.mp4"
+    output_file2 = output_folder / config['file2_name']
     ffmpeg2 = subprocess.Popen(
         [
             "ffmpeg",
@@ -131,12 +136,12 @@ if __name__ == "__main__":
 
     # ffmpeg 3rd pass to add BITC and flip video !
     output_file3 = (
-        output_folder + filename + "_int.mp4"
+        output_folder / (filename + "_int.mp4")
     )  # added _int to demark internal camera
     filter = (
-        "drawtext=fontfile=/home/pi/.fonts/NovaRound.ttf:fontsize=48:text='%{pts\:localtime\:"
+        "drawtext=fontfile=" + config['font_path'] + ":fontsize=" + config['font_size'] + ":text='%{pts\:localtime\:"
         + str(offset)
-        + "\\:%Y %m %d %H %M %S}': fontcolor=orange@1: x=10: y=10"
+        + "\\:%Y %m %d %H %M %S}': fontcolor=" + config['font_colour'] + "@1: x=10: y=10"
     )
     logger.debug("Using ffmpeg filter %s", filter)
     ffmpeg3 = subprocess.Popen(
