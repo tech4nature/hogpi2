@@ -4,13 +4,18 @@ from numpy import ndarray, sort, array, float, isnan
 import json
 from collections import deque
 from pathlib import Path
-from json_minify import json_minify
+from datetime import datetime
+import time
 
 from .hx711 import HX711
 from . import data
 
-config: Dict = json.loads(json_minify(
-    open(Path.home() / 'data' / 'config.json', 'r+').read()))['weight']
+# TODO: Config
+config: Dict = {
+    "min_percentile": 75,
+    "spike_cut": 5,  # A percentage of values that will be cut off to get rid of spikes
+}
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,32 +28,41 @@ class sensor:
         self.hx.set_reference_unit(389)  # TODO: Make Calibration Script
         self.hx.reset()
 
+        self.last_ran = 0
+
     def tare_weight(self) -> None:
         tares = json.load(open(Path.home() / 'data' / 'tares.json', 'r+'))
+        print(tares)
         tares = array(tares)
-        tares = tares[:int(len(tares) / 10)]
+        print(tares)
+        tares = tares[:int(len(tares) / 10 + 1)]
+        print(tares)
         tare = tares.mean()
-        self.hx.OFFSET = tare
+        print(tare)
+        self.hx.OFFSET = tare * self.hx.REFERENCE_UNIT
 
     def tare_no_save(self, cycle_time) -> None:
-        old_offset = self.hx.OFFSET
-        self.hx.tare()
-        tares = json.load(open(Path.home() / 'data' / 'tares.json', 'r+'))
-        tares = deque(tares, int(3600 / cycle_time))
-        tares.append(self.hx.OFFSET)
-        self.hx.OFFSET = old_offset
-        json.dump(list(tares), open(Path.home() / 'data' / 'tares.json', 'w'))
+        if self.last_ran + cycle_time < time.time():
+            self.last_ran = time.time()
+            old_offset = self.hx.OFFSET
+            self.hx.tare()
+            tares = json.load(open(Path.home() / 'data' / 'tares.json', 'r+'))
+            tares = deque(tares, int(3600 / cycle_time))
+            tares.append(self.hx.OFFSET / self.hx.REFERENCE_UNIT)
+            print(tares)
+            print(self.hx.OFFSET)
+            open(Path.home() / 'tare.log', 'a+').write(
+                f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, {self.hx.OFFSET / self.hx.REFERENCE_UNIT}g\n')
+            self.hx.OFFSET = old_offset
+            json.dump(list(tares), open(Path.home() / 'data' / 'tares.json', 'w'))
 
     def read(self, times: int = 10) -> data.Data:
         # Read and refine weight
 
         weights: List = []
 
-        for _ in range(times):
+        for i in range(times):
             weight: float = self.hx.get_weight()
-
-            if weight < 0:
-                weight: float = 0
 
             weight: float = float("%.2f" % weight)
             weights.append(weight)
@@ -80,9 +94,15 @@ class sensor:
 
         if not isnan(final_weight.value[0]):
             data_as_dict: Dict = data.serialise(final_weight)
-            weights_dict: List = json.load(open(Path.home() / 'data' / 'weights.json', "r"))
+
+            weights_dict: List = json.load(
+                open(Path.home() / 'data' / 'weights.json', "r")
+            )
+
             weights_dict.append(data_as_dict)
+
             json.dump(weights_dict, open(
-                Path.home() / 'data' / 'weights.json', "w"))
+                Path.home() / 'data' / 'weights.json', "w")
+            )
 
             return final_weight

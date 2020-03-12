@@ -42,7 +42,7 @@ if __name__ == "__main__":
             "-V",
             "mono",
             "-v",
-            "audio",
+            str(Path.home() / 'data' / 'videos' / 'audio'),
         ],
         stdout=subprocess.PIPE,
     )
@@ -62,7 +62,7 @@ if __name__ == "__main__":
             "-i",
             "/dev/video0",
             "-i",
-            "audio",
+            str(Path.home() / 'data' / 'videos' / 'audio'),
             "-c:a",
             "mp3",
             "-c:v",
@@ -72,9 +72,9 @@ if __name__ == "__main__":
             "-timestamp",
             "now",
             "-t",
-            config['record_time'],
+            str(config['record_time']),
             "-y",
-            output_file1,
+            str(output_file1),
         ],
         stdin=arec.stdout,
     )
@@ -139,7 +139,7 @@ if __name__ == "__main__":
         output_folder / (filename + "_int.mp4")
     )  # added _int to demark internal camera
     filter = (
-        "drawtext=fontfile=" + config['font_path'] + ":fontsize=" + config['font_size'] + ":text='%{pts\:localtime\:"
+        "drawtext=fontfile=" + config['font_path'] + ":fontsize=" + str(config['font_size']) + ":text='%{pts\:localtime\:"
         + str(offset)
         + "\\:%Y %m %d %H %M %S}': fontcolor=" + config['font_colour'] + "@1: x=10: y=10"
     )

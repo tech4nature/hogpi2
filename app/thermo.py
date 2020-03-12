@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 class sensor:
     def __init__(self):
         # Sets up thermostat
-        os.system("modprobe w1-gpio")
-        os.system("modprobe w1-therm")
+        os.system("sudo modprobe w1-gpio")
+        os.system("sudo modprobe w1-therm")
 
         global base_dir
         global temp_sensors
@@ -32,14 +32,12 @@ class sensor:
             temp_sensors.append(i + "/w1_slave")
         num_t_sensor = len(temp_sensors)
         if num_t_sensor == 0:
-            raise Exception
+            raise Exception('No temperature sensors found')
 
     def get_time(self):
         d = datetime.now(timezone.utc)
-        x = d.strftime("%Y %m %d %H %M %S")
         logger.debug("Raw time: %s", d)
-        logger.debug("Refined time: %s", x)
-        return x
+        return d
 
     def read_temp_raw(self, sensor):
         # Gets raw data off the thermostat
@@ -72,7 +70,14 @@ class sensor:
                     data_type = "temp_in"
                 if i == 2:
                     data_type = "temp_out"
-                data = Data(data_type, temp_c, t)
-                json.dump(serialise(data), open(Path.home() / 'data' / (data_type + '.json')))
+                logger.debug(f'Data type: {data_type}, Temp: {temp_c}')
+                data = Data(data_type, ["%.1f" % temp_c], t)
+                temps = json.load(open(Path.home() / 'data' /
+                               (data_type + '.json'), 'r'))
+                logger.info(temps)
+                logger.info(serialise(data))
+                temps.append(serialise(data))
+                logger.info(temps)
+                json.dump(temps, open(Path.home() / 'data' / (data_type + '.json'), 'w'))
                 a.append(data)
         return a

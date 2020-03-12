@@ -6,13 +6,16 @@ import numpy
 import os
 import glob
 from datetime import datetime, timezone
+from logging import getLogger
 
 from . import client, data
 
 config: Dict = json.loads(json_minify(
     open(Path.home() / 'data' / 'config.json', 'r+').read()))['post']
+logger = getLogger(__name__)
 
 def weight(hog_id):
+    logger.info("Posting weight")
     weights_json: Dict = json.load(open(Path.home() / 'data' / 'weights.json', "r"))
     weights: List = data.deserialise_many(weights_json)
 
@@ -26,14 +29,15 @@ def weight(hog_id):
     json.dump([], open(Path.home() / 'data' / 'weights.json', "w"))
 
 def thermo():
+    logger.info("Posting Temp")
     temps_in = data.deserialise_many(json.load(
         open(Path.home() / 'data' / 'temp_in.json', "r")))
     temps_out = data.deserialise_many(json.load(
         open(Path.home() / 'data' / 'temp_out.json', "r")))
-    
+
     for temp_in in temps_in:
         client.create_inside_temp(
-            config['box_id'], 
+            config['box_id'],
             temp_in.value[0], temp_in.timestamp
         )
 
@@ -43,7 +47,11 @@ def thermo():
             temp_out.value[0], temp_out.timestamp
         )
 
+    json.dump([], open(Path.home() / 'data' / 'temp_in.json', "w"))
+    json.dump([], open(Path.home() / 'data' / 'temp_out.json', "w"))
+
 def video(hog_id):
+    logger.info("Posting video")
     os.chdir(Path.home() / 'data' / 'videos')
     videos = [glob.glob(e) for e in ["*.mp4"]]
 

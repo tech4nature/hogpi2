@@ -19,7 +19,4 @@ class sensor:
     def read(self):
         result = bool(RPi.GPIO.input(self.pin))
 
-        if result:
-            logger.debug("PIR Triggered")
-
         return result

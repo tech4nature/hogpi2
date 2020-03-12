@@ -1,0 +1,7 @@
+Install minicom
+sudo minicom
+
+Ctrl+A Z -> O -> Serial Port Setup -> A -> Set to /dev/ttyAMA0 or /dev/serial1 -> Enter -> Enter
+Ctrl+A Z -> E
+
+Type some stuff and if you see it on the screen, it is working!

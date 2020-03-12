@@ -1,6 +1,8 @@
 {
     "hedge": {
-        "temp_time": 3600, // Duration between temperature runs
+        "rfid_timeout": 45, // RFID timeout in seconds
+        "temp_time": 3600, // Duration between temperature runs in seconds
+        "tare_time": 300, // Duration between tare readings in seconds
         "ip_root": "10.170.1.",
         "ip_min": 10,
         "ip_max": 20
@@ -22,6 +24,6 @@
     },
     "weight": {
         "min_percentile": 75, // The percentile the value has to be above to be factored into the average
-        "spike_cut": 5,  // A percentage of values that will be cut off to get rid of spikes
+        "spike_cut": 5  // A percentage of values that will be cut off to get rid of spikes
     }
 }
