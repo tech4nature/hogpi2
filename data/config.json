@@ -5,10 +5,11 @@
         "tare_time": 300, // Duration between tare readings in seconds
         "ip_root": "10.170.1.",
         "ip_min": 10,
-        "ip_max": 20
+        "ip_max": 20,
+        "remote_cams": false // Change to true to enable remote camera video pulling
     },
     "post": {
-        "box_id": "007",
+        "box_id": "testbox",
         "backup_videos": true
     },
     "thermo": {

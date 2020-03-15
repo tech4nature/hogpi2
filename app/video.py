@@ -1,91 +1,109 @@
 import subprocess
-from datetime import datetime
-from time import strftime
-import os
-import sys
+from threading import Thread
 import logging
-import pytz
-import tzlocal
-from pathlib import Path
+import logging.handlers
 import json
 from json_minify import json_minify
 from typing import Dict
+from pathlib import Path
+import tzlocal
+from datetime import datetime
+import pytz
+import os
 
 from . import led
 
 config: Dict = json.loads(json_minify(
     open(Path.home() / 'data' / 'config.json', 'r+').read()))['video']
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('app.video')
 
+def dispatch_thread(target, args=(), timeout=120, join=True):
+    logger.debug(f'Dispatching thread: {target.__name__}')
+    thread = Thread(target=target, args=args)
+    thread.start()
+    if join:
+        thread.join()
+    logger.info(f'Started thread: {target.__name__}')
+    return thread
 
-if __name__ == "__main__":
-    irled = led.sensor(17)  # Instantiate led class and assign the pin the BCM17
+def record_audio():
+    arecord = subprocess.run([
+        "/usr/bin/arecord",
+        "-D",
+        "mic_mono",
+        "-d",
+        str(config['record_time']),
+        "-c1",
+        "-r",
+        "48000",
+        "-f",
+        "S32_LE",
+        "-t",
+        "wav",
+        "-V",
+        "mono",
+        "-v",
+        str(Path.home() / 'data' / 'videos' / 'audio'),
+    ],capture_output=True)
 
-    output_folder = Path.home() / 'data' / 'videos' # output folder
-    output_file1 = output_folder / config['file1_name']
+    logging.debug(f'Arecord STDOUT: {arecord.stdout.decode()}')
+    logging.debug(f'Arecord STDERR: {arecord.stderr.decode()}')
 
-    # ffmpeg 1st Pass record
-    irled.on()  # Turn led on
+def record_video():
+    ffmpeg = subprocess.run([
+        '/usr/bin/ffmpeg',
+        "-f",
+        "v4l2",
+        "-r",
+        "25",
+        "-video_size",
+        "1280x720",
+        "-pixel_format",
+        "yuv422p",
+        "-input_format",
+        "h264",
+        '-i',
+        '/dev/video0',
+        '-i',
+        str(Path.home() / 'data' / 'videos' / 'audio'),
+        '-c:a',
+        'mp3',
+        '-c:v',
+        'copy',
+        '-r',
+        '25',
+        "-timestamp",
+        "now",
+        "-t",
+        str(config['record_time']),
+        "-y",
+        str(Path.home() / 'data' / 'videos' / str(config['file1_name']))
+    ],capture_output=True)
 
-    arec = subprocess.Popen(
-        [
-            "arecord",
-            "-D",
-            "mic_mono",
-            "-c1",
-            "-r",
-            "48000",
-            "-f",
-            "S32_LE",
-            "-t",
-            "wav",
-            "-V",
-            "mono",
-            "-v",
-            str(Path.home() / 'data' / 'videos' / 'audio'),
-        ],
-        stdout=subprocess.PIPE,
+    logging.debug(f'ffmpeg STDOUT: {ffmpeg.stdout.decode()}')
+    logging.debug(f'ffmpeg STDERR: {ffmpeg.stderr.decode()}')
+
+def main():
+    formatter = logging.Formatter(
+        '%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+    handler = logging.handlers.RotatingFileHandler(
+        filename="video.log", maxBytes=1024 * 1024 * 5, backupCount=5
     )
-    ffmpeg1 = subprocess.Popen(
-        [
-            "ffmpeg",
-            "-f",
-            "v4l2",
-            "-r",
-            "25",
-            "-video_size",
-            "1280x720",
-            "-pixel_format",
-            "yuv422p",
-            "-input_format",
-            "h264",
-            "-i",
-            "/dev/video0",
-            "-i",
-            str(Path.home() / 'data' / 'videos' / 'audio'),
-            "-c:a",
-            "mp3",
-            "-c:v",
-            "copy",
-            "-r",
-            "25",
-            "-timestamp",
-            "now",
-            "-t",
-            str(config['record_time']),
-            "-y",
-            str(output_file1),
-        ],
-        stdin=arec.stdout,
-    )
-    arec.stdout.close()  # pipe is already attached to ffmpeg1, and unneeded in this process
-    ffmpeg1.wait()
-    arec.terminate()
-    irled.off()  # Turn led off
+    handler.setFormatter(formatter)
+    logging.basicConfig(handlers=[handler], level=logging.DEBUG)
+    
+    light = led.sensor(17)
 
-    # ffprobe to extract recording time and date and turn into offset seconds
-    command = [
-        "ffprobe",
+    light.on()
+
+    dispatch_thread(record_audio, join=False)
+    dispatch_thread(record_video)
+
+    light.off()
+
+    output = subprocess.run(
+    [
+        "/usr/bin/ffprobe",
         "-v",
         "error",
         "-show_entries",
@@ -93,9 +111,11 @@ if __name__ == "__main__":
         "-of",
         "default=nw=1:nk=1",
         "-i",
-        output_file1,
-    ]
-    output = subprocess.check_output(command).decode("utf-8")
+        str(Path.home() / 'data' / 'videos' / str(config['file1_name']))
+    ],
+    capture_output=True
+    ).stdout.decode()
+
     logger.debug("Got output %s", output)
 
     local_timezone = tzlocal.get_localzone()  # get pytz tzinfo
@@ -110,10 +130,12 @@ if __name__ == "__main__":
     filename = d.replace(" ", "-")
 
     # ffmpeg 2nd pass to sync audio and video
-    output_file2 = output_folder / config['file2_name']
-    ffmpeg2 = subprocess.Popen(
+    output_file1 = Path.home() / 'data' / 'videos' / str(config['file1_name'])
+    output_file2 = Path.home() / 'data' / 'videos' / config['file2_name']
+
+    ffmpeg2 = subprocess.run(
         [
-            "ffmpeg",
+            "/usr/bin/ffmpeg",
             "-i",
             output_file1,
             "-itsoffset",
@@ -130,23 +152,28 @@ if __name__ == "__main__":
             "1:0",
             "-y",
             output_file2,
-        ]
+        ],
+        capture_output=True
     )
-    ffmpeg2.wait()
+    
+    logging.debug(f'ffmpeg2 STDOUT: {ffmpeg2.stdout.decode()}')
+    logging.debug(f'ffmpeg2 STDERR: {ffmpeg2.stderr.decode()}')
 
     # ffmpeg 3rd pass to add BITC and flip video !
     output_file3 = (
-        output_folder / (filename + "_int.mp4")
+        Path.home() / 'data' / 'videos' / ( filename + '_int.mp4' )
     )  # added _int to demark internal camera
     filter = (
-        "drawtext=fontfile=" + config['font_path'] + ":fontsize=" + str(config['font_size']) + ":text='%{pts\:localtime\:"
+        "drawtext=fontfile=" + config['font_path'] + ":fontsize=" +
+        str(config['font_size']) + ":text='%{pts\:localtime\:"
         + str(offset)
-        + "\\:%Y %m %d %H %M %S}': fontcolor=" + config['font_colour'] + "@1: x=10: y=10"
+        + "\\:%Y %m %d %H %M %S}': fontcolor=" +
+        config['font_colour'] + "@1: x=10: y=10"
     )
     logger.debug("Using ffmpeg filter %s", filter)
-    ffmpeg3 = subprocess.Popen(
+    ffmpeg3 = subprocess.run(
         [
-            "ffmpeg",
+            "/usr/bin/ffmpeg",
             "-i",
             output_file2,
             "-vf",
@@ -161,14 +188,17 @@ if __name__ == "__main__":
             "25",
             "-y",
             output_file3,
-        ]
-    )  # tried '-c:v', 'h264_omx', '-profile', '100'
-    ffmpeg3.wait()
+        ],
+        capture_output=True
+    )
 
-    # remove 1stPASS.mp4 and 2ndPASS.mp4 if ffmpeg3 is sucessful
+    logging.debug(f'ffmpeg3 STDOUT: {ffmpeg3.stdout.decode()}')
+    logging.debug(f'ffmpeg3 STDERR: {ffmpeg3.stderr.decode()}')
+
     if ffmpeg3.returncode == 0:
         os.remove(output_file1)
         os.remove(output_file2)
-        # os.remove("/home/pi/jackTest/audio")
+        os.remove(Path.home() / 'data' / 'videos' / 'audio')
 
-    sys.exit()
+if __name__ == "__main__":
+    main()

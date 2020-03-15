@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 import os
 
-from . import pir, post, rfid, sftp, thermo, weight
+from . import pir, post, rfid, sftp, thermo, video, weight
 
 config: Dict = json.loads(json_minify(
     open(Path.home() / 'data' / 'config.json', 'r+').read()))['hedge']
@@ -37,9 +37,9 @@ def run_weight(hog_id):
 
 
 def run_video(hog_id): 
-    logger.info('Running video')
-    os.chdir(Path.home())
-    subprocess.run([Path.home() / '.pyenv' / 'versions' / '3.8.2' / 'bin' / 'python', '-m', 'app.video'], timeout=120)
+    logger.info('Running video see video.log for debug')
+    video.main()
+    logger.info('Posting video')
     post.video(hog_id)
 
 def run_thermo():
@@ -59,21 +59,25 @@ def pull_videos():
 def main():
     weight_sensor.tare_no_save(config['tare_time'])
     if pir_sensor.read():
-        logger.info("PIR Trigerred")
+        logger.info("PIR Triggered")
         hog_id = rfid_sensor.read()
         dispatch_thread(run_weight, args=(hog_id,))
-        run_video(hog_id)
+        dispatch_thread(run_video, args=(hog_id,))
 
 def hourly():
     logger.info('Running hourly loop')
     weight_sensor.tare_weight()
-    dispatch_thread(pull_videos())
+    if config['remote_cams']:
+        dispatch_thread(pull_videos())
 
 
 if __name__ == "__main__":
+    formatter = logging.Formatter(
+        '%(asctime)s:%(levelname)s:%(name)s:%(message)s')
     handler = logging.handlers.RotatingFileHandler(
         filename="hedge.log", maxBytes=1024 * 1024 * 5, backupCount=5
     )
+    handler.setFormatter(formatter)
     logging.basicConfig(handlers=[handler], level=logging.DEBUG)
 
     last_ran = 0
