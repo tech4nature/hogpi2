@@ -51,7 +51,7 @@ class HX711:
 
     def createBoolList(self, size=8):
         ret = []
-        for _ in range(size):
+        for i in range(size):
             ret.append(False)
         return ret
 
@@ -59,7 +59,8 @@ class HX711:
         while not self.is_ready():
             pass
 
-        dataBits = [self.createBoolList(), self.createBoolList(), self.createBoolList()]
+        dataBits = [self.createBoolList(), self.createBoolList(),
+                    self.createBoolList()]
         dataBytes = [0x0] * 4
 
         for j in range(
@@ -91,6 +92,7 @@ class HX711:
         return dataBytes
 
     def get_binary_string(self):
+        binary_format = "{0:b}"
         np_arr8 = self.read_np_arr8()
         binary_string = ""
         for i in range(4):
@@ -126,32 +128,33 @@ class HX711:
 
     def read_average(self, times=3):
         values = int(0)
-        for _ in range(times):
+        for i in range(times):
             values += self.read_int()
 
         return values / times
 
-    # def store_offset(self):
-    #     with open(
-    #         "/home/pi/HogPi/app/tare_weight.csv", "w+"
-    #     ) as f:  # changed to new dir
-    #         # write using the csv object change from float to string
-    #         f.write(str(self.OFFSET))
-    #     return
+    def store_offset(self):
+        with open(
+            "/home/pi/HogPi/app/tare_weight.csv", "w+"
+        ) as f:  # changed to new dir
+            # write using the csv object change from float to string
+            f.write(str(self.OFFSET))
+        return
 
-    # def store_offset_read(self):
-    #     with open(
-    #         "/home/pi/HogPi/app/tare_weight.csv", "r"
-    #     ) as r_csvfile:  # chnaged to new dir
-    #         mylist = [row[0] for row in reader(r_csvfile, delimiter=";")]
-    #         store_offset = float(mylist[0])
-    #     return store_offset
+    def store_offset_read(self):
+        with open(
+            "/home/pi/HogPi/app/tare_weight.csv", "r"
+        ) as r_csvfile:  # chnaged to new dir
+            mylist = [row[0] for row in reader(r_csvfile, delimiter=";")]
+            store_offset = float(mylist[0])
+        return store_offset
 
     def get_value(self, times=3):
+        self.store_offset()
         return self.read_average(times) - self.OFFSET
 
     def get_value_no_tare(self, times=3):
-        return self.read_average(times)
+        return self.read_average(times) - self.store_offset_read()
 
     def get_weight(self, times=3):
         value = self.get_value(times)
