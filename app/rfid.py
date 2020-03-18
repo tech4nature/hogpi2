@@ -1,19 +1,14 @@
 import serial
 import time
+from logging import getLogger
 
-timeout = 1
-global TagFound
-global tag
-TagFound = None
-tag = None
+logger = getLogger(__name__)
 
 # docs: http://www.priority1design.com.au/rfidrw-e-ttl.pdf
 
-
 class sensor:
     def __init__(self, rfid_record_time):
-        global ser
-        ser = serial.Serial(
+        self.ser = serial.Serial(
             port="/dev/ttyAMA0",
             baudrate=9600,
             parity=serial.PARITY_NONE,
@@ -23,12 +18,16 @@ class sensor:
         )
 
     def read(self):
-        ser.reset_input_buffer()  #  clean buffer
-        ser.reset_output_buffer()  # clean buffer
-        ser.write(b"sd2\r\n")  # set mode of rfid
-        a = ser.read_until(size=19).decode(
-            "utf-8"
-        )  # 16 byte  + \r + \n somehow is 19 not 18
-        if len(a) > 15:  # if read then return out of function
-            return a  # return and break out of functions
+        logger.info("Reading RFID")
+        self.ser.reset_input_buffer()  # clean buffer
+        self.ser.reset_output_buffer()  # clean buffer
+        self.ser.write(b"sd2\r\n")  # set mode of rfid
+        tag = self.ser.read_until(size=19).decode()  # 16 byte  + \r + \n somehow is 19 not 18
+        
+        logger.debug(f"Got: {tag}")
+        if len(tag) > 15:  # if read then return out of function
+            logger.info(f"Found tag: {tag}")
+            return tag  # return and break out of functions
+
+        logger.info("Tag not present")
         return "TagNotPresent"  # return only if timed out
