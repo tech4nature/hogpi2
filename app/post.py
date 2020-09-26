@@ -23,7 +23,7 @@ def weight(hog_id):
     posted = False
 
     for weight in weights:
-        if not numpy.isnan(weight.value[0]) and weight.value[0] > 5:
+        if not numpy.isnan(weight.value[0]) and weight.value[0] > config['minimum_weight_value']:
             client.create_weight(
                 config['box_id'], "hog-" +
                 hog_id, weight.value[0], weight.timestamp

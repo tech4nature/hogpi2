@@ -14,7 +14,8 @@
     "post": {
         "box_id": "anonymous",
         "backup_videos": false, // Backs up all video files to FinishedVideos
-        "only_post_if_weight": true // Video will only be posted if weight was $
+        "only_post_if_weight": true, // Video will only be posted if weight was greater than the value below
+        "minimum_weight_value": 100 // Video will only be posted if weight was greater than this value (in grams)
     },
     "sftp": {
         "pull_remote_cam_logs": false
