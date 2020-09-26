@@ -46,8 +46,8 @@ def record_audio():
         str(Path.home() / 'data' / 'videos' / 'audio'),
     ],capture_output=True)
 
-    # logging.debug(f'Arecord STDOUT: {arecord.stdout.decode()}')
-    # logging.debug(f'Arecord STDERR: {arecord.stderr.decode()}')
+    #logging.debug(f'Arecord STDOUT: {arecord.stdout.decode()}')
+    #logging.debug(f'Arecord STDERR: {arecord.stderr.decode()}')
 
 def record_video():
     ffmpeg = subprocess.run([
@@ -80,8 +80,8 @@ def record_video():
         str(Path.home() / 'data' / 'videos' / str(config['file1_name']))
     ],capture_output=True)
 
-    # logging.debug(f'ffmpeg STDOUT: {ffmpeg.stdout.decode()}')
-    # logging.debug(f'ffmpeg STDERR: {ffmpeg.stderr.decode()}')
+    #logging.debug(f'ffmpeg STDOUT: {ffmpeg.stdout.decode()}')
+    #logging.debug(f'ffmpeg STDERR: {ffmpeg.stderr.decode()}')
 
 def main():
     light = led.sensor(17)
@@ -148,19 +148,21 @@ def main():
         capture_output=True
     )
     
-    # logging.debug(f'ffmpeg2 STDOUT: {ffmpeg2.stdout.decode()}')
-    # logging.debug(f'ffmpeg2 STDERR: {ffmpeg2.stderr.decode()}')
+    #logging.debug(f'ffmpeg2 STDOUT: {ffmpeg2.stdout.decode()}')
+    #logging.debug(f'ffmpeg2 STDERR: {ffmpeg2.stderr.decode()}')
 
     # ffmpeg 3rd pass to add BITC and flip video !
     output_file3 = (
         Path.home() / 'data' / 'videos' / ( filename + '_int.mp4' )
     )  # added _int to demark internal camera
     filter = (
-        "drawtext=fontfile=" + config['font_path'] + ":fontsize=" +
-        str(config['font_size']) + ":text='%{pts\:localtime\:"
+        ('hflip, ' if config['hflip'] else '')
+        + ('vflip, ' if config['vflip'] else '')
+        + "drawtext=fontfile=" + config['font_path'] + ":fontsize="
+        + str(config['font_size']) + ":text='%{pts\:localtime\:"
         + str(offset)
-        + "\\:%Y %m %d %H %M %S}': fontcolor=" +
-        config['font_colour'] + "@1: x=10: y=10"
+        + "\\:%Y %m %d %H %M %S}': fontcolor="
+        + config['font_colour'] + "@1: x=10: y=10"
     )
     logger.debug("Using ffmpeg filter %s", filter)
     ffmpeg3 = subprocess.run(
@@ -184,8 +186,8 @@ def main():
         capture_output=True
     )
 
-    # logging.debug(f'ffmpeg3 STDOUT: {ffmpeg3.stdout.decode()}')
-    # logging.debug(f'ffmpeg3 STDERR: {ffmpeg3.stderr.decode()}')
+    #logging.debug(f'ffmpeg3 STDOUT: {ffmpeg3.stdout.decode()}')
+    #logging.debug(f'ffmpeg3 STDERR: {ffmpeg3.stderr.decode()}')
 
     if ffmpeg3.returncode == 0:
         os.remove(output_file1)

@@ -6,16 +6,13 @@ from collections import deque
 from pathlib import Path
 from datetime import datetime
 import time
+from json_minify import json_minify
 
 from .hx711 import HX711
 from . import data
 
-# TODO: Config
-config: Dict = {
-    "min_percentile": 75,
-    "spike_cut": 5,  # A percentage of values that will be cut off to get rid of spikes
-}
-
+config: Dict = json.loads(json_minify(
+    open(Path.home() / 'data' / 'config.json', 'r+').read()))['weight']
 logger = logging.getLogger(__name__)
 
 
@@ -25,7 +22,7 @@ class sensor:
 
         self.hx: HX711 = HX711(5, 6)
         self.hx.set_reading_format("LSB", "MSB")
-        self.hx.set_reference_unit(389)  # TODO: Make Calibration Script
+        self.hx.set_reference_unit(config['reference_unit'])  # TODO: Make Calibration Script
         self.hx.reset()
 
         self.last_ran = 0
@@ -35,10 +32,12 @@ class sensor:
         print(tares)
         tares = array(tares)
         print(tares)
+        tares = sort(tares)
+        print(tares)
         tares = tares[:int(len(tares) / 10 + 1)]
         print(tares)
         tare = tares.mean()
-        print(tare)
+        logger.debug(tare)
         self.hx.OFFSET = tare * self.hx.REFERENCE_UNIT
 
     def tare_no_save(self, cycle_time) -> None:
@@ -60,6 +59,7 @@ class sensor:
         # Read and refine weight
 
         weights: List = []
+        self.tare_weight()
 
         for i in range(times):
             weight: float = self.hx.get_weight()
@@ -80,8 +80,8 @@ class sensor:
 
         logger.debug(weights)
         weights: ndarray = weights[
-                           : int((len(weights) / 100) * (100 - config["spike_cut"]))
-                           ]
+            : int((len(weights) / 100) * (100 - config["spike_cut"]))
+        ]
         logger.debug(weights)
         max_value: float = weights[-1]
         min_cut: float = (max_value / 100) * config["min_percentile"]

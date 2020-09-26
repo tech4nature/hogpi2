@@ -16,7 +16,7 @@ config: Dict = json.loads(json_minify(
 logger = logging.getLogger(__name__)
 
 pir_sensor = pir.sensor(11)
-rfid_sensor = rfid.sensor(config['rfid_timeout'])
+rfid_sensor = rfid.sensor()
 thermo_sensor = thermo.sensor()
 weight_sensor = weight.sensor()
 
@@ -49,7 +49,7 @@ def run_thermo():
 
 def pull_videos():
     logger.info('Pulling videos')
-    for ip in range(config['ip_min'], config['ip_max']):
+    for ip in range(config['ip_min'], config['ip_max'] + 1):
         response = os.system("ping -c 5 " + config['ip_root'] + str(ip))
         logger.info(f'Found something at IP: {config["ip_root"] + str(ip)}')
         if response == 0:

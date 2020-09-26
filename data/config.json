@@ -1,6 +1,5 @@
 {
     "hedge": {
-        "rfid_timeout": 45, // RFID timeout in seconds
         "temp_time": 3600, // Duration between temperature runs in seconds
         "tare_time": 300, // Duration between tare readings in seconds
         "ip_root": "10.170.1.",
@@ -8,9 +7,17 @@
         "ip_max": 20,
         "remote_cams": false // Change to true to enable remote camera video pulling
     },
+    "rfid": {
+        "rfid_timeout": 45, // RFID timeout in seconds
+        "rfid_tag_type": "FDX-B" // Can be EM4100 or FDX-B. EM4100 will also read HDX if you use FDX-B
+    },
     "post": {
-        "box_id": "testbox",
-        "backup_videos": true
+        "box_id": "anonymous",
+        "backup_videos": false, // Backs up all video files to FinishedVideos
+        "only_post_if_weight": true // Video will only be posted if weight was $
+    },
+    "sftp": {
+        "pull_remote_cam_logs": false
     },
     "thermo": {
         "invert_in_out": false // Toggle if your outside sensor is reading as inside
@@ -21,10 +28,13 @@
         "file2_name": "2ndPASS.mp4", // Name of the 2nd file
         "font_path": "/home/pi/.fonts/NovaRound.ttf",
         "font_size": 48,
-        "font_colour": "orange"
+        "font_colour": "orange",
+        "hflip": false, // Flips the video vertically
+        "vflip": false // Flips the video horizontally
     },
     "weight": {
         "min_percentile": 75, // The percentile the value has to be above to be factored into the average
-        "spike_cut": 5  // A percentage of values that will be cut off to get rid of spikes
+        "spike_cut": 5,  // A percentage of values that will be cut off to get rid of spikes
+        "reference_unit": 1 // DO NOT CHANGE
     }
 }
