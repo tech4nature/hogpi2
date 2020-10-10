@@ -14,6 +14,8 @@ config: Dict = json.loads(json_minify(
     open(Path.home() / 'data' / 'config.json', 'r+').read()))['post']
 logger = getLogger(__name__)
 
+(Path.home() / 'data' / 'toBePosted').mkdir(exist_ok=True)
+
 
 def weight(hog_id):
     logger.info("Posting weight")
@@ -80,7 +82,8 @@ def video(hog_id):
             if config['backup_videos']:
                 os.rename(
                     Path.home() / 'data' / 'videos' / new_video,
-                    Path.home() / 'data' / 'finishedVideos' / (new_video.split(".mp4")[0] + "nw.mp4")
+                    Path.home() / 'data' / 'finishedVideos' /
+                    (new_video.split(".mp4")[0] + "nw.mp4")
                 )
             else:
                 os.remove(Path.home() / 'data' / 'toBePosted' / new_video)
@@ -94,8 +97,8 @@ def video(hog_id):
         time = time.astimezone(timezone.utc)  # timezone correction
 
         client.upload_video(
-            config['box_id'], "hog-" + hog_id, Path.home() /
-                              'data' / 'videos' / video, time
+            config['box_id'], "hog-" + hog_id,
+            Path.home() / 'data' / 'toBePosted' / video, time
         )
 
         if config['backup_videos']:
