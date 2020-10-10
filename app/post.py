@@ -26,7 +26,7 @@ def weight(hog_id):
         if not numpy.isnan(weight.value[0]) and weight.value[0] > 100:
             client.create_weight(
                 config['box_id'], "hog-" +
-                hog_id, weight.value[0], weight.timestamp
+                                  hog_id, weight.value[0], weight.timestamp
             )
             posted = True
 
@@ -62,33 +62,46 @@ def thermo():
 def video(hog_id):
     logger.info("Posting video")
 
-    os.chdir(Path.home() / 'data' / 'videos')
-    videos = [glob.glob(e) for e in ["*.mp4"]]
     weight_posted = json.load(open(Path.home() / 'data' / 'weight_posted.json', 'r'))
 
-    for video in videos[0]:
-        if (video != "1stPASS.mp4" and weight_posted) or 'ext' in video:
-            strtime = video.split("_")[0]
-            time = datetime.strptime(strtime, "%Y-%m-%d-%H-%M-%S-%z")
-            time = time.astimezone(timezone.utc)  # timezone correction
+    os.chdir(Path.home() / 'data' / 'videos')
+    new_videos = glob.glob("*.mp4")
 
-            client.upload_video(
-                config['box_id'], "hog-" + hog_id, Path.home() /
-                'data' / 'videos' / video, time
+    for new_video in new_videos:
+        if (new_video != "1stPASS.mp4" and weight_posted) or 'ext' in new_video:
+            logger.debug("Video moved to be posted")
+            os.rename(
+                Path.home() / 'data' / 'videos' / new_video,
+                Path.home() / 'data' / 'toBePosted' / new_video
             )
         else:
-            logger.info("Weight wasn't posted, so video wasn't either")
+            logger.info("Weight too low, video deleted")
 
-        if config['backup_videos']:
-            if not weight_posted and 'int' in video:
+            if config['backup_videos']:
                 os.rename(
-                    Path.home() / 'data' / 'videos' / video,
-                    Path.home() / 'data' / 'finishedVideos' / (video.split(".mp4")[0] + "nw.mp4")
+                    Path.home() / 'data' / 'videos' / new_video,
+                    Path.home() / 'data' / 'finishedVideos' / (new_video.split(".mp4")[0] + "nw.mp4")
                 )
             else:
-                os.rename(
-                    Path.home() / 'data' / 'videos' / video,
-                    Path.home() / 'data' / 'finishedVideos' / video
-                )
+                os.remove(Path.home() / 'data' / 'toBePosted' / new_video)
+
+    os.chdir(Path.home() / 'data' / 'toBePosted')
+    videos = glob.glob("*.mp4")
+
+    for video in videos:
+        strtime = video.split("_")[0]
+        time = datetime.strptime(strtime, "%Y-%m-%d-%H-%M-%S-%z")
+        time = time.astimezone(timezone.utc)  # timezone correction
+
+        client.upload_video(
+            config['box_id'], "hog-" + hog_id, Path.home() /
+                              'data' / 'videos' / video, time
+        )
+
+        if config['backup_videos']:
+            os.rename(
+                Path.home() / 'data' / 'toBePosted' / video,
+                Path.home() / 'data' / 'finishedVideos' / video
+            )
         else:
-            os.remove(Path.home() / 'data' / 'videos' / video)
+            os.remove(Path.home() / 'data' / 'toBePosted' / video)
