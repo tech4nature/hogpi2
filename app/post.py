@@ -24,16 +24,18 @@ def weight(hog_id):
 
     posted = False
 
+    if weights[-1].value[0] > 100:
+        posted = True  # TODO: Change variable name
+
+    if config['only_post_if_weight']:
+        json.dump(posted, open(Path.home() / 'data' / 'weight_posted.json', 'w+'))
+
     for weight in weights:
         if not numpy.isnan(weight.value[0]) and weight.value[0] > 100:
             client.create_weight(
                 config['box_id'], "hog-" +
                                   hog_id, weight.value[0], weight.timestamp
             )
-            posted = True
-
-    if config['only_post_if_weight']:
-        json.dump(posted, open(Path.home() / 'data' / 'weight_posted.json', 'w+'))
 
     json.dump([], open(Path.home() / 'data' / 'weights.json', "w"))
 
@@ -86,7 +88,7 @@ def video(hog_id):
                     (new_video.split(".mp4")[0] + "nw.mp4")
                 )
             else:
-                os.remove(Path.home() / 'data' / 'toBePosted' / new_video)
+                os.remove(Path.home() / 'data' / 'videos' / new_video)
 
     os.chdir(Path.home() / 'data' / 'toBePosted')
     videos = glob.glob("*.mp4")
