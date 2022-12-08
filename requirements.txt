@@ -4,27 +4,55 @@
 #
 #    pip-compile
 #
-astroid==2.3.3            # via pylint
-autopep8==1.5             # via -r requirements.in
-certifi==2019.11.28       # via requests
-chardet==3.0.4            # via requests
-click==7.0                # via pip-tools
-colorzero==1.1            # via gpiozero
-gpiozero==1.5.1           # via -r requirements.in
-idna==2.9                 # via requests
-isort==4.3.21             # via pylint
-json-minify==0.3.0        # via -r requirements.in
-lazy-object-proxy==1.4.3  # via astroid
-mccabe==0.6.1             # via pylint
-numpy==1.18.1             # via -r requirements.in
-pathlib==1.0.1            # via -r requirements.in
-pip-tools==4.5.1          # via -r requirements.in
-pycodestyle==2.5.0        # via autopep8
-pylint==2.4.4             # via -r requirements.in
-pyserial==3.4             # via -r requirements.in
-pytz==2019.3              # via -r requirements.in, tzlocal
-requests==2.23.0          # via -r requirements.in
-six==1.14.0               # via astroid, pip-tools
-tzlocal==2.0.0            # via -r requirements.in
-urllib3==1.25.8           # via requests
-wrapt==1.11.2             # via astroid
+astroid==2.3.3
+    # via pylint
+autopep8==1.5
+    # via -r requirements.in
+certifi==2022.12.7
+    # via requests
+chardet==3.0.4
+    # via requests
+click==7.0
+    # via pip-tools
+colorzero==1.1
+    # via gpiozero
+gpiozero==1.5.1
+    # via -r requirements.in
+idna==2.9
+    # via requests
+isort==4.3.21
+    # via pylint
+json-minify==0.3.0
+    # via -r requirements.in
+lazy-object-proxy==1.4.3
+    # via astroid
+mccabe==0.6.1
+    # via pylint
+numpy==1.18.1
+    # via -r requirements.in
+pathlib==1.0.1
+    # via -r requirements.in
+pip-tools==4.5.1
+    # via -r requirements.in
+pycodestyle==2.5.0
+    # via autopep8
+pylint==2.4.4
+    # via -r requirements.in
+pyserial==3.4
+    # via -r requirements.in
+pytz==2019.3
+    # via
+    #   -r requirements.in
+    #   tzlocal
+requests==2.23.0
+    # via -r requirements.in
+six==1.14.0
+    # via
+    #   astroid
+    #   pip-tools
+tzlocal==2.0.0
+    # via -r requirements.in
+urllib3==1.25.8
+    # via requests
+wrapt==1.11.2
+    # via astroid
